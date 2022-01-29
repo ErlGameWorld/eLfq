@@ -18,6 +18,8 @@ struct NifTraits : public moodycamel::ConcurrentQueueDefaultTraits {
 
 using lfqIns = moodycamel::ConcurrentQueue<ErlNifBinary, NifTraits> *;
 
+const size_t BulkDelCnt = 200;
+
 ERL_NIF_TERM atomOk;
 ERL_NIF_TERM atomError;
 ERL_NIF_TERM atomNewErr;
@@ -27,13 +29,19 @@ ERL_NIF_TERM atomEmpty;
 
 void eLfqFree(ErlNifEnv *, void *obj) {
     lfqIns *ObjIns = static_cast<lfqIns *>(obj);
-    if (ObjIns != nullptr) {
-        ErlNifBinary TermBin;
-        while ((*ObjIns)->try_dequeue(TermBin)) {
-            enif_release_binary(&TermBin);
-        }
 
-        delete ObjIns;
+    if (NULL != ObjIns && NULL != *ObjIns) {
+        std::vector <ErlNifBinary> TermBinList(BulkDelCnt);
+        size_t OutSize;
+        do{
+            OutSize = (*ObjIns)->try_dequeue_bulk(TermBinList.begin(), TermBinList.size());
+            for (int i = OutSize - 1; i >= 0; i--) {
+                enif_release_binary(&TermBinList[i]);
+            }
+        }while(OutSize >= BulkDelCnt);
+
+        delete (*ObjIns);
+        *ObjIns = NULL;
     }
 }
 
@@ -95,12 +103,14 @@ ERL_NIF_TERM nifDel1(ErlNifEnv *env, int, const ERL_NIF_TERM argv[]) {
     }
 
     if (NULL != ObjIns && NULL != *ObjIns) {
-        std::vector <ErlNifBinary> TermBinList(20);
-        size_t OutSize = (*ObjIns)->try_dequeue_bulk(TermBinList.begin(), TermBinList.size());
-
-        for (int i = OutSize - 1; i >= 0; i--) {
-            enif_release_binary(&TermBinList[i]);
-        }
+        std::vector <ErlNifBinary> TermBinList(BulkDelCnt);
+        size_t OutSize;
+        do{
+            OutSize = (*ObjIns)->try_dequeue_bulk(TermBinList.begin(), TermBinList.size());
+            for (int i = OutSize - 1; i >= 0; i--) {
+                enif_release_binary(&TermBinList[i]);
+            }
+        }while(OutSize >= BulkDelCnt);
 
         delete (*ObjIns);
         *ObjIns = NULL;
