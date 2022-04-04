@@ -35,7 +35,7 @@ void eLfqFree(ErlNifEnv *, void *obj) {
         size_t OutSize;
         do{
             OutSize = (*ObjIns)->try_dequeue_bulk(TermBinList.begin(), TermBinList.size());
-            for (int i = OutSize - 1; i >= 0; i--) {
+            for (int i = OutSize - 1; i >= 0; --i) {
                 enif_release_binary(&TermBinList[i]);
             }
         }while(OutSize >= BulkDelCnt);
@@ -107,7 +107,7 @@ ERL_NIF_TERM nifDel1(ErlNifEnv *env, int, const ERL_NIF_TERM argv[]) {
         size_t OutSize;
         do{
             OutSize = (*ObjIns)->try_dequeue_bulk(TermBinList.begin(), TermBinList.size());
-            for (int i = OutSize - 1; i >= 0; i--) {
+            for (int i = OutSize - 1; i >= 0; --i) {
                 enif_release_binary(&TermBinList[i]);
             }
         }while(OutSize >= BulkDelCnt);
@@ -227,7 +227,7 @@ ERL_NIF_TERM nifTryOuts2(ErlNifEnv *env, int, const ERL_NIF_TERM argv[]) {
     ERL_NIF_TERM RetList = enif_make_list(env, 0);
 
     ERL_NIF_TERM OutTerm;
-    for (int i = OutSize - 1; i >= 0; i--) {
+    for (int i = OutSize - 1; i >= 0; --i) {
         if (enif_binary_to_term(env, TermBinList[i].data, TermBinList[i].size, &OutTerm, 0) == 0) {
             enif_release_binary(&TermBinList[i]);
         } else {
