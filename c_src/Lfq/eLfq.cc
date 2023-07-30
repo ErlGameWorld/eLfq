@@ -80,11 +80,10 @@ ERL_NIF_TERM nifNew(ErlNifEnv *env, int, const ERL_NIF_TERM *) {
     ErlNifResourceType *ResIns = static_cast<ErlNifResourceType *>(enif_priv_data(env));
 
     lfqIns *ObjIns = static_cast<lfqIns *>(enif_alloc_resource(ResIns, sizeof(lfqIns)));
-    *ObjIns = new moodycamel::ConcurrentQueue<ErlNifBinary, NifTraits>;
-
     if (ObjIns == NULL)
         return atomNewErr;
 
+    *ObjIns = new moodycamel::ConcurrentQueue<ErlNifBinary, NifTraits>;
     if (*ObjIns == NULL)
         return atomNewErr;
 
